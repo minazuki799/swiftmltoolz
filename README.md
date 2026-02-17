@@ -10,4 +10,4 @@ A lightweight machine learning toolkit built from scratch.
 
 ## Installation
 ```bash
-pip install git+https://github.com/YOUR_USERNAME/swiftmltoolz.git
+pip install git+https://github.com/minazuki799/swiftmltoolz.git
