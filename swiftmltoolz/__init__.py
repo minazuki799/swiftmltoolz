@@ -5,5 +5,6 @@ from .swiftmltoolz import (
     plot_roc_comparison,
     plot_importance,
     select_important_features,
-    plot_decision_boundary
+    plot_decision_boundary,
+    plot_lin
 )

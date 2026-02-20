@@ -20,6 +20,7 @@ Evaluation:
     - plot_roc_comparison
     - plot_importance
     - plot_decision_boundary
+    - plot_lin
 
 Feature Engineering:
     - get_logreg_importance
@@ -408,6 +409,16 @@ def plot_decision_boundary(model, X, y, feature_names):
     plt.grid(alpha=0.3)
     plt.show()
     
+def plot_lin(data,column_names,y):
+    """
+    plots all the  features x  against y
+    """
+    for column in column_names:
+        plt.scatter(data=data, x=data[column], y= y)
+        plt.xlabel(f"{column}")
+        plt.ylabel(f"{y}")
+        plt.show()
+    
 # ============================================================
 # Feature Selection
 # ============================================================
@@ -458,4 +469,5 @@ __all__ = [
     "plot_importance",
     "select_important_features",
     "plot_decision_boundary"
+    "plot_lin"
 ]
