@@ -21,6 +21,7 @@ Evaluation:
     - plot_importance
     - plot_decision_boundary
     - plot_lin
+    - plot_corr_heatmap
 
 Feature Engineering:
     - get_logreg_importance
@@ -35,6 +36,8 @@ __author__ = "Swift"
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import seaborn as sns
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.metrics import auc
 from sklearn.utils import check_X_y, check_array, shuffle
@@ -319,45 +322,55 @@ def plot_roc_comparison(model_results):
     plt.tight_layout()
     plt.show()
 
-def plot_importance(importances, X, title="Feature Importances"):
-    """
-    Plots feature importances.
-    
-    Parameters:
-    importances: Array-like, the raw importance scores.
-    feature_names: Array-like, the names of the features.
-    """
-    # 1. Sort the features from highest to lowest
-    indices = np.argsort(importances)
-    # 2. Handle feature names 
-    if hasattr(X, 'columns'):
-        feature_names = X.columns
-    else:
-        feature_names = X # Assume X is already a list of names
-    # 3. Setup the Plot
-    plt.style.use('seaborn-v0_8-muted')
-    fig, ax = plt.subplots(figsize=(10, 8))
-    
-    # 4. Create Horizontal Bars
-    bars = ax.barh(range(len(indices)), importances[indices], color='steelblue', align='center', alpha=0.8)
-    
-    # 5. Set Labels
-    ax.set_yticks(range(len(indices)))
-    ax.set_yticklabels([feature_names[i] for i in indices], fontsize=11)
-    
-    # 6. Add value annotations to the end of each bar
-    for bar in bars:
-        width = bar.get_width()
-        ax.text(width + 0.005, bar.get_y() + bar.get_height()/2, 
-                f'{width:.3f}', va='center', fontsize=10, fontweight='bold')
 
-    # Professional Formatting
-    ax.set_xlabel('Importance Score', fontsize=12, fontweight='bold')
-    ax.set_title(title, fontsize=14, fontweight='bold', pad=20)
+def plot_importance(importances, X, column_names=None, title="Feature Importances", top_n=20):
+    # 1. Logic for Feature Names - Now includes a safety check
+    n_features = len(importances)
     
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.grid(axis='x', linestyle='--', alpha=0.4)
+    if column_names is not None and len(column_names) == n_features:
+        feature_names = np.array(column_names)
+    elif hasattr(X, 'columns') and len(X.columns) == n_features:
+        feature_names = np.array(X.columns)
+    else:
+        # Fallback: Generate generic names if there's a mismatch
+        print(f"Warning: Column name mismatch. Expected {n_features}, got {len(column_names) if column_names is not None else 0}. Using indices.")
+        feature_names = np.array([f"Feature {i}" for i in range(n_features)])
+
+    # 2. Sort and Slice to Top N
+    top_n = min(top_n, n_features)
+    indices = np.argsort(importances)[-top_n:]
+    sorted_importances = importances[indices]
+    sorted_names = feature_names[indices]
+
+    # 3. Dynamic Figure Size
+    fig, ax = plt.subplots(figsize=(12, 0.45 * top_n))
+    fig.patch.set_facecolor('#fdfdfd') # Very light grey background for contrast
+    
+    # 4. Enhanced Color Mapping 
+    # Using 'magma' or 'viridis' for a high-end look
+    norm = plt.Normalize(vmin=sorted_importances.min(), vmax=sorted_importances.max())
+    colors = cm.plasma(norm(sorted_importances))
+
+    # 5. Create Horizontal Bars
+    bars = ax.barh(range(top_n), sorted_importances, color=colors, 
+                   edgecolor='white', linewidth=1, alpha=0.85)
+
+    # 6. Refined Typography & Styling
+    ax.set_yticks(range(top_n))
+    ax.set_yticklabels(sorted_names, fontsize=11, color='#2C3E50', fontweight='500')
+    
+    # Modern value labels
+    ax.bar_label(bars, padding=8, fmt='%.3f', fontsize=10, 
+                 fontweight='bold', color='#34495E')
+
+    # 7. Professional Finishing Touches
+    ax.set_title(title.upper(), fontsize=18, fontweight='bold', 
+                 color='#2C3E50', loc='left', pad=25)
+    
+    # Clean up the chart area
+    ax.spines[['top', 'right', 'bottom', 'left']].set_visible(False)
+    ax.xaxis.set_visible(False) 
+    ax.tick_params(axis='y', which='both', length=0) # Remove tick marks
     
     plt.tight_layout()
     plt.show()
@@ -409,9 +422,56 @@ def plot_decision_boundary(model, X, y, feature_names):
     plt.grid(alpha=0.3)
     plt.show()
     
+    
+def plot_corr_heatmap(data, cmap="coolwarm", title="Feature Correlation Matrix"):
+    """
+    Computes correlation and plots a high-resolution professional heatmap.
+    
+    Recommended CMAPs:
+    -----------------
+    'RdBu_r'   : Professional standard (Red=Pos, Blue=Neg)
+    'coolwarm' : Soft and modern gradient
+    'vlag'     : Muted/Academic look
+    'magma'    : High-contrast/Dark mode feel
+    'mako'     : Sleek teal/ocean tones
+    """
+    # 1. Compute Correlation
+    corr = data.corr(numeric_only=True)
+    
+    # 2. Figure Setup
+    plt.figure(figsize=(18, 11), facecolor='#FDFDFD')
+    sns.set_theme(style="white", font_scale=1.0)
+    
+    # 3. Create Heatmap
+    # center=0 is crucial: it ensures 0 correlation is the neutral color
+    ax = sns.heatmap(
+        data=corr,
+        annot=True,
+        cmap=cmap,
+        fmt=".2f",
+        center=0,             # Zero is always neutral (white/grey)
+        square=True,          # Keeps cells as perfect squares
+        linewidths=0.5,      # Subtle separation lines
+        linecolor='#EEEEEE', # Soft grey lines
+        cbar_kws={"shrink": .8, "label": "Correlation Strength"},
+        annot_kws={"size": 9, "weight": "bold", "color": "#333333"}
+    )
+    
+    # 4. Professional Formatting
+    plt.title(title.upper(), fontsize=20, fontweight='bold', pad=30, loc='left', color='#2C3E50')
+    
+    # Clean up axis labels
+    plt.xticks(rotation=45, ha='right', fontsize=10, color='#34495E')
+    plt.yticks(rotation=0, fontsize=10, color='#34495E')
+    
+    plt.tight_layout()
+    plt.show()
+    
 def plot_lin(data,column_names,y):
     """
     plots all the  features x  against y
+    usage: plot_lin(data,column_names,y)
+    y = target variable name as string
     """
     for column in column_names:
         plt.scatter(data=data, x=data[column], y= y)
@@ -424,7 +484,11 @@ def plot_lin(data,column_names,y):
 # ============================================================
 
 def select_important_features(X, importances, threshold=None, top_n=None):
-    """Select features by threshold or top_n."""
+    """Select features by threshold or top_n.
+    returns the filtered DataFrame and the list of selected feature names.
+    usage: X_selected, selected_names = select_important_features(X, importances, threshold=0.05)
+    or: X_selected, selected_names = select_important_features(X, importances, top_n=10)
+    """
     # 1. Get feature names
     if hasattr(X, 'columns'):
         feature_names = np.array(X.columns)
@@ -470,4 +534,5 @@ __all__ = [
     "select_important_features",
     "plot_decision_boundary"
     "plot_lin"
+    "plot_corr_heatmap"
 ]
