@@ -6,5 +6,6 @@ from .swiftmltoolz import (
     plot_importance,
     select_important_features,
     plot_decision_boundary,
-    plot_lin
+    plot_lin,
+    plot_corr_heatmap
 )
