@@ -8,5 +8,6 @@ from .swiftmltoolz import (
     plot_decision_boundary,
     plot_lin,
     plot_corr_heatmap,
-    plot_model_pred_corr
+    plot_model_pred_corr,
+    print_mutual_information
 )

@@ -22,6 +22,7 @@ Evaluation:
     - plot_decision_boundary
     - plot_lin
     - plot_corr_heatmap
+    - print_mutual_information
 
 Feature Engineering:
     - get_logreg_importance
@@ -41,7 +42,7 @@ import matplotlib.cm as cm
 import seaborn as sns
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.model_selection import cross_val_predict
-from sklearn.metrics import auc
+from sklearn.metrics import auc, mutual_info_score
 from sklearn.utils import check_X_y, check_array, shuffle
 from sklearn.utils.validation import check_is_fitted
 
@@ -266,6 +267,39 @@ class Z_Score_Normalizer(BaseEstimator, TransformerMixin):
 # ============================================================
 # Feature Importance Utilities
 # ============================================================
+
+
+def print_mutual_information(data, cat_cols: list, y, print_plain=False, plot_bar=False):
+    """
+    data: dataframe
+    cat_cols: names of categorical columns
+    y: name of target column
+    """
+
+    col_mutual_info = []
+    mutual_score = []
+    score_names = f"mutual_info_scores_with_{y}"
+    for col in cat_cols:
+        score = mutual_info_score(data[y], data[col])
+
+        if print_plain:
+            print(f"mutual_info_score for {col} and {y} {score:.4f}")
+
+        col_mutual_info.append(col)
+        mutual_score.append(score)
+    df = pd.DataFrame({
+        "features": col_mutual_info,
+        score_names: mutual_score
+    })
+    df_sorted = df.sort_values(
+        ascending=False, by=score_names).set_index('features')
+    if plot_bar:
+        plt.figure(figsize=(10, 6))
+        sns.barplot(data=df_sorted, x=score_names, y=df_sorted.index,
+                    hue=df_sorted.index, palette='hls', legend=False)
+        plt.title(f"Mutual Information Scores with {y}")
+        plt.show()
+    return df_sorted
 
 
 def get_logreg_importance(model):
@@ -580,5 +614,6 @@ __all__ = [
     "plot_decision_boundary",
     "plot_lin",
     "plot_corr_heatmap",
-    "plot_model_pred_corr"
+    "plot_model_pred_corr",
+    "print_mutual_information"
 ]
