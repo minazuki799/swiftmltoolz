@@ -27,6 +27,9 @@ Evaluation:
 Feature Engineering:
     - get_logreg_importance
     - select_important_features
+    
+Deep Learning:
+    - best_val_train_acc
 """
 __version__ = "0.1.0"
 __author__ = "Swift"
@@ -603,6 +606,60 @@ def select_important_features(X, importances, threshold=None, top_n=None):
         f"Selected {len(selected_names)} features out of {len(importances)}.")
     return X_selected, list(selected_names)
 
+# ============================================================
+# Deep Learning
+# ============================================================
+
+
+def best_val_train_acc(history):
+    """
+    history = model.fit
+    """
+    # 1. Prepare the data
+    val_acc = history.history['val_accuracy']
+    train_acc = history.history['accuracy']  # Added training data
+    epochs = range(1, len(val_acc) + 1)
+
+    # 2. Find the best points
+    best_epoch_idx = np.argmax(val_acc)
+    best_epoch = best_epoch_idx + 1
+    best_val_acc = val_acc[best_epoch_idx]
+    # Find the training accuracy from that SAME epoch
+    equiv_train_acc = train_acc[best_epoch_idx]
+
+    # 3. Create a wide figure
+    plt.figure(figsize=(15, 6))
+
+    # Plot Training Accuracy (Green)
+    plt.plot(epochs, train_acc, 'g-', label='Training Accuracy', alpha=0.5)
+    plt.scatter(epochs, train_acc, color='green', s=10)
+
+    # Plot Validation Accuracy (Blue)
+    plt.plot(epochs, val_acc, 'b-', label='Validation Accuracy', alpha=0.7)
+    plt.scatter(epochs, val_acc, color='blue', s=10)
+
+    # 4. Highlight the points for the best validation epoch
+    # Best Val point (Red Star)
+    plt.plot(best_epoch, best_val_acc, 'r*', markersize=15,
+             label=f'Best Val: {best_val_acc:.4f} (Ep {best_epoch})')
+
+    # Equivalent Train point (Orange Diamond)
+    plt.plot(best_epoch, equiv_train_acc, 'D', color='orange', markersize=8,
+             label=f'Equiv Train: {equiv_train_acc:.4f}')
+
+    # 5. Fix x-axis overcrowding
+    step = 5 if len(epochs) > 20 else 1
+    plt.xticks(np.arange(0, len(epochs) + 1, step))
+
+    # 6. Aesthetics
+    plt.title('Training vs Validation Accuracy', fontsize=16)
+    plt.xlabel('Epochs', fontsize=12)
+    plt.ylabel('Accuracy', fontsize=12)
+    plt.legend(loc='lower right')
+    plt.grid(True, linestyle='--', alpha=0.6)
+
+    plt.show()
+
 
 __all__ = [
     "LogisticRegressionGD",
@@ -615,5 +672,6 @@ __all__ = [
     "plot_lin",
     "plot_corr_heatmap",
     "plot_model_pred_corr",
-    "print_mutual_information"
+    "print_mutual_information",
+    "best_val_train_acc"
 ]

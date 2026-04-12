@@ -7,6 +7,7 @@ A lightweight machine learning toolkit built from scratch.
 - Feature importance
 - Visualization tools
 - Z-score normalization
+- Deep learning helper functions
 
 ## Installation
 ```bash
