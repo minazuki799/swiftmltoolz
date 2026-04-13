@@ -10,5 +10,6 @@ from .swiftmltoolz import (
     plot_corr_heatmap,
     plot_model_pred_corr,
     print_mutual_information,
-    best_val_train_acc
+    best_val_train_acc,
+    download_test_images
 )
