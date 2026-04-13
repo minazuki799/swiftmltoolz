@@ -30,6 +30,7 @@ Feature Engineering:
     
 Deep Learning:
     - best_val_train_acc
+    - download_test_images
 """
 __version__ = "0.1.0"
 __author__ = "Swift"
@@ -48,6 +49,8 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import auc, mutual_info_score
 from sklearn.utils import check_X_y, check_array, shuffle
 from sklearn.utils.validation import check_is_fitted
+from bing_image_downloader import downloader
+import os
 
 # ============================================================
 # Models
@@ -661,6 +664,52 @@ def best_val_train_acc(history):
     plt.show()
 
 
+def download_test_images(classes, total_images, save_dir='/content/test', verify_download=False):
+    """
+    Downloads images for each class and saves them to save_dir.
+
+    Args:
+        classes: list of class names to download
+        total_images: total number of images to download across all classes
+        save_dir: directory to save images
+    """
+    # Calculate images per class
+    images_per_class = total_images // len(classes)
+    remainder = total_images % len(classes)
+
+    print(
+        f"Downloading {images_per_class} images per class ({total_images} total)\n")
+
+    for i, img_class in enumerate(classes):
+        # Give one extra image to first classes if total doesn't divide evenly
+        limit = images_per_class + (1 if i < remainder else 0)
+
+        print(f"📥 Downloading {limit} images for: {img_class}")
+
+        downloader.download(
+            query=img_class,
+            limit=limit,
+            output_dir=save_dir,
+            adult_filter_off=True,
+            force_replace=False,
+            timeout=60,
+            verbose=False
+        )
+
+        print(f" {img_class} done — saved to {save_dir}{img_class}/")
+
+    print(f"\n ✅ All done! {total_images} images saved to {save_dir}")
+
+    if verify_download == True:
+        # Verify downloads
+        print("\n📊 Download summary:")
+        for img_ in classes:
+            folder = os.path.join(save_dir, img_)
+            if os.path.exists(folder):
+                count = len(os.listdir(folder))
+                print(f"  {img_}: {count} images")
+
+
 __all__ = [
     "LogisticRegressionGD",
     "Z_Score_Normalizer",
@@ -673,5 +722,6 @@ __all__ = [
     "plot_corr_heatmap",
     "plot_model_pred_corr",
     "print_mutual_information",
-    "best_val_train_acc"
+    "best_val_train_acc",
+    "download_test_images"
 ]

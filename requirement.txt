@@ -3,5 +3,6 @@ matplotlib>=3.5
 seaborn
 pandas
 scikit-learn>=1.0
+bing-image-downloader
 git config --global user.name "Victor Okosun"
 git config --global user.email "deofficialswift@gmail.com"
