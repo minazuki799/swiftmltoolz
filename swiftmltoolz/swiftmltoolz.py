@@ -31,6 +31,7 @@ Feature Engineering:
 Deep Learning:
     - best_val_train_acc
     - download_test_images
+    - display_images
     
 Google collab specific helpers:
     - download_kaggle_dataset
@@ -46,6 +47,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.image as mpimg
+import random
 import seaborn as sns
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.model_selection import cross_val_predict
@@ -59,6 +62,7 @@ import shutil
 import zipfile
 import glob
 import os
+
 
 # ============================================================
 # Models
@@ -718,6 +722,90 @@ def download_test_images(classes, total_images, save_dir='/content/test', verify
                 print(f"  {img_}: {count} images")
 
 
+def display_images(data_dir, classes=None, images_per_class=4,
+                   num_classes_to_show=5, figsize=None):
+    """
+    Displays sample images from each class in a grid layout.
+
+    Args:
+        data_dir: directory containing class subfolders
+        classes: list of specific class names to display (None = random selection)
+        images_per_class: number of images to show per class
+        num_classes_to_show: number of classes to display if classes=None
+        figsize: figure size — auto calculated if None
+    """
+
+    # Get all classes from directory
+    all_classes = sorted(os.listdir(data_dir))
+    all_classes = [c for c in all_classes if os.path.isdir(
+        os.path.join(data_dir, c))]
+
+    # If no specific classes given pick a random sample
+    if classes is None:
+        classes = random.sample(all_classes, min(
+            num_classes_to_show, len(all_classes)))
+
+    num_classes = len(classes)
+
+    # Auto calculate figure size
+    if figsize is None:
+        width = images_per_class * 4
+        height = num_classes * 4
+        figsize = (width, height)
+
+    fig, axes = plt.subplots(num_classes, images_per_class, figsize=figsize)
+
+    # Handle single class case
+    if num_classes == 1:
+        axes = [axes]
+
+    for row, cls in enumerate(classes):
+        cls_dir = os.path.join(data_dir, cls)
+
+        # Get all images in class folder
+        images = [
+            f for f in os.listdir(cls_dir)
+            if f.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.gif'))
+        ]
+
+        # Randomly sample images
+        selected = random.sample(images, min(images_per_class, len(images)))
+
+        for col in range(images_per_class):
+            ax = axes[row][col] if num_classes > 1 else axes[col]
+
+            if col < len(selected):
+                img_path = os.path.join(cls_dir, selected[col])
+                img = mpimg.imread(img_path)
+                ax.imshow(img)
+                ax.axis('off')
+
+                # Clean up class name for display
+                # Stanford Dogs format is "n02085620-Chihuahua" — extract readable name
+                clean_name = cls.split('-')[-1].replace('_', ' ').title()
+
+                if col == 0:
+                    ax.set_title(clean_name, fontsize=12,
+                                 fontweight='bold', loc='left',
+                                 color='white',
+                                 bbox=dict(boxstyle='round,pad=0.3',
+                                           facecolor='#222222',
+                                           alpha=0.85))
+            else:
+                ax.axis('off')
+
+    plt.suptitle("Dataset Sample Images",
+                 fontsize=16,
+                 fontweight='bold',
+                 y=1.01)
+
+    plt.subplots_adjust(hspace=0.3, wspace=0.05)
+    plt.show()
+    print(f"Showing {num_classes} of {len(all_classes)} total classes")
+
+# Collab Specific Helper for Kaggle Datasets
+
+
 def download_kaggle_dataset(
     dataset,
     save_dir,
@@ -809,5 +897,6 @@ __all__ = [
     "print_mutual_information",
     "best_val_train_acc",
     "download_test_images",
-    "download_kaggle_dataset"
+    "download_kaggle_dataset",
+    "display_images"
 ]

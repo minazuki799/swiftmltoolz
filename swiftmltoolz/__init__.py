@@ -12,5 +12,6 @@ from .swiftmltoolz import (
     print_mutual_information,
     best_val_train_acc,
     download_test_images,
-    download_kaggle_dataset
+    download_kaggle_dataset,
+    display_images
 )
