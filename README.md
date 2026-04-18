@@ -8,6 +8,7 @@ A lightweight machine learning toolkit built from scratch.
 - Visualization tools
 - Z-score normalization
 - Deep learning helper functions
+- Google Collab specific helper functions
 
 ## Installation
 ```bash

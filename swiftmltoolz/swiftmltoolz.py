@@ -31,6 +31,9 @@ Feature Engineering:
 Deep Learning:
     - best_val_train_acc
     - download_test_images
+    
+Google collab specific helpers:
+    - download_kaggle_dataset
 """
 __version__ = "0.1.0"
 __author__ = "Swift"
@@ -50,6 +53,11 @@ from sklearn.metrics import auc, mutual_info_score
 from sklearn.utils import check_X_y, check_array, shuffle
 from sklearn.utils.validation import check_is_fitted
 from bing_image_downloader import downloader
+from google.colab import drive
+import os
+import shutil
+import zipfile
+import glob
 import os
 
 # ============================================================
@@ -710,6 +718,83 @@ def download_test_images(classes, total_images, save_dir='/content/test', verify
                 print(f"  {img_}: {count} images")
 
 
+def download_kaggle_dataset(
+    dataset,
+    save_dir,
+    kaggle_config_dir="/content/drive/MyDrive/kaggle",
+    mount_drive=True,
+    unzip=True,
+    copy_to_colab=False,
+    colab_dir="/content/dataset"
+):
+    """
+    Downloads a Kaggle dataset directly to a specified Google Drive folder.
+
+    Args:
+        dataset: Kaggle dataset string e.g. "jessicali9530/stanford-dogs-dataset"
+        save_dir: Google Drive folder to save the dataset as zip
+        kaggle_config_dir: folder where kaggle.json is stored in Drive
+        mount_drive: whether to mount Google Drive (set False if already mounted)
+        unzip: whether to unzip in Colab after copying (only applies if copy_to_colab=True)
+        copy_to_colab: whether to copy the dataset to Colab local storage
+        colab_dir: local Colab directory to copy and unzip files to
+    """
+
+    # Step 1 - Mount Google Drive
+    if mount_drive:
+        drive.mount('/content/drive')
+
+    # Step 2 - Set Kaggle config directory
+    os.environ['KAGGLE_CONFIG_DIR'] = kaggle_config_dir
+    print(f"✅ Kaggle config set to: {kaggle_config_dir}")
+
+    # Step 3 - Create save directory if it doesn't exist
+    os.makedirs(save_dir, exist_ok=True)
+    os.chdir(save_dir)
+    print(f"✅ Saving to: {save_dir}")
+
+    # Step 4 - Download dataset (zip always saved to Drive)
+    print(f"📥 Downloading: {dataset}")
+    os.system(f"kaggle datasets download -d {dataset}")
+    print(f"✅ Download complete — zip saved to Drive")
+
+    # Step 5 - Copy to Colab and unzip there
+    if copy_to_colab:
+        os.makedirs(colab_dir, exist_ok=True)
+
+        zip_files = glob.glob(os.path.join(save_dir, "*.zip"))
+
+        if zip_files:
+            for zip_file in zip_files:
+                zip_filename = os.path.basename(zip_file)
+                colab_zip_path = os.path.join(colab_dir, zip_filename)
+
+                # Copy zip to Colab
+                print(f"\n📋 Copying {zip_filename} to Colab...")
+                shutil.copy2(zip_file, colab_zip_path)
+                print(f"✅ Copied to: {colab_dir}")
+
+                # Unzip in Colab only
+                if unzip:
+                    print(f"📦 Unzipping in Colab: {zip_filename}")
+                    with zipfile.ZipFile(colab_zip_path, 'r') as zip_ref:
+                        zip_ref.extractall(colab_dir)
+                    os.remove(colab_zip_path)
+                    print(f"✅ Unzipped in Colab — zip removed from Colab")
+                    print(f"✅ Original zip kept intact on Drive: {save_dir}")
+        else:
+            print("⚠️ No zip files found in Drive folder")
+
+    # Step 6 - Summary
+    final_dir = colab_dir if copy_to_colab else save_dir
+    print(f"\n📊 Contents of {final_dir}:")
+    for item in os.listdir(final_dir):
+        print(f"  {item}")
+
+    print(f"\n🎉 Done! Use this path in your code:")
+    print(f"   '{final_dir}'")
+
+
 __all__ = [
     "LogisticRegressionGD",
     "Z_Score_Normalizer",
@@ -723,5 +808,6 @@ __all__ = [
     "plot_model_pred_corr",
     "print_mutual_information",
     "best_val_train_acc",
-    "download_test_images"
+    "download_test_images",
+    "download_kaggle_dataset"
 ]

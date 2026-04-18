@@ -11,5 +11,6 @@ from .swiftmltoolz import (
     plot_model_pred_corr,
     print_mutual_information,
     best_val_train_acc,
-    download_test_images
+    download_test_images,
+    download_kaggle_dataset
 )
